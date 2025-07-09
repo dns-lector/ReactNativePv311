@@ -10,9 +10,58 @@ type EventData = {
 const distanceThreshold = 50;  // поріг спрацьовування свайпу (мін. відстань проведення)
 const timeThreshold = 500;     // поріг спрацьовування свайпу (макс. час проведення)
 
+function tileBackground(tileValue: number) {
+    return tileValue == 0 ? "#BDAFA2"
+    : tileValue == 2      ? "#EEE3DB"
+    : tileValue == 4      ? "#EEE1D0"
+    : tileValue == 8      ? "#E8B486"
+    : tileValue == 16     ? "#E79B73"
+    : tileValue == 32     ? "#E4846E"
+    : tileValue == 64     ? "#E26A51"
+    : tileValue == 128    ? "#bbb"
+    : tileValue == 256    ? "#bbb"
+    : tileValue == 512    ? "#bbb"
+    : tileValue == 1024   ? "#bbb"
+    : tileValue == 2048   ? "#bbb"
+    : tileValue == 4096   ? "#bbb"
+                          : "#bbb";
+}
+
+function tileForeground(tileValue: number) {
+    return tileValue == 0 ? "#BDAFA2"
+    : tileValue == 2      ? "#746C63"
+    : tileValue == 4      ? "#766E66"
+    : tileValue == 8      ? "#FAF3EF"
+    : tileValue == 16     ? "#FBF5F2"
+    : tileValue == 32     ? "#FBF5F2"
+    : tileValue == 64     ? "#FBF5F2"
+    : tileValue == 128    ? "#444"
+    : tileValue == 256    ? "#444"
+    : tileValue == 512    ? "#444"
+    : tileValue == 1024   ? "#444"
+    : tileValue == 2048   ? "#444"
+    : tileValue == 4096   ? "#444"
+                          : "#444";
+}
+
+
 export default function Game() {
     const {navigate} = useContext(AppContext);
     const {width} = useWindowDimensions();
+    const [tiles, setTiles] = useState([
+        0,    2,    4,     8,
+        16,   32,   64,    128,
+        256,  512,  1024,  2048,
+        4096, 8192, 16384, 32768
+    ]);
+
+    const tileFontSize = (tileValue: number) => {
+        return tileValue < 10 ? width * 0.12
+        : tileValue < 100     ? width * 0.1
+        : tileValue < 1000    ? width * 0.08
+        : tileValue < 10000   ? width * 0.07
+                              : width * 0.06;
+    };
 
     // swipes - жести проведення з обмеженням мінімальних
     // відстаней та швидкостей
@@ -48,6 +97,26 @@ export default function Game() {
         }
     };
 
+    const spawnTile = () => {
+        var freeTiles = [];
+        for(let i = 0; i < tiles.length; i += 1) {
+            if(tiles[i] == 0) {
+                freeTiles.push(i);
+            }
+        }
+        const randomIndex = freeTiles[Math.floor(Math.random() * freeTiles.length)];
+        tiles[randomIndex] = Math.random() < 0.9 ? 2 : 4;
+    };
+
+    const newGame = () => {
+        for(let i = 0; i < tiles.length; i += 1) {
+            tiles[i] = 0;
+        }
+        spawnTile();
+        spawnTile();
+        setTiles([...tiles]);
+    };
+
     return <View style={styles.container}>
         <View style={[styles.topBlock, {marginHorizontal: width * 0.025}]}>
             <Text style={styles.topBlockText}>
@@ -67,7 +136,7 @@ export default function Game() {
                 </View>
 
                 <View style={styles.topBlockButtons}>
-                    <Pressable style={styles.topBlockButton}><Text style={styles.topBlockButtonText}>NEW</Text></Pressable>
+                    <Pressable style={styles.topBlockButton} onPress={newGame}><Text style={styles.topBlockButtonText}>NEW</Text></Pressable>
                     <Pressable style={styles.topBlockButton}><Text style={styles.topBlockButtonText}>UNDO</Text></Pressable>
                 </View>
             </View>
@@ -90,11 +159,21 @@ export default function Game() {
                 })}> 
 
             <View style={[styles.field, {width: width * 0.95, height: width * 0.95}]}>
-                <Pressable onPress={() => navigate('calc')}>
-                    <Text>{text}</Text>    
-                </Pressable> 
+                {tiles.map((tile, index) => <Text key={index}
+                style={[styles.tile, {
+                    backgroundColor: tileBackground(tile),
+                    color: tileForeground(tile),
+                    width: width * 0.21,
+                    fontSize: tileFontSize(tile),
+                    fontWeight: 900,
+                    height: width * 0.21,
+                    marginLeft: width * 0.022,
+                    marginTop: width * 0.022,
+                }]}>{tile}</Text>)}
             </View>
         </TouchableWithoutFeedback>
+
+        <Text>{text}</Text>
     </View>
     ;
 }
@@ -170,6 +249,19 @@ const styles = StyleSheet.create({
   field: {
     backgroundColor: "#A29383",
     borderRadius: 10,
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginHorizontal: "auto"
+  },
+  tile: {
+    borderRadius: 5,
+    textAlign: "center",
+    verticalAlign: "middle"
   }
 });
+/*
+Д.З. Завершити оформлення віджета з грою 2048
+- відступи та втяжки
+- розміри шрифтів та кольори
+- загальні відступи (повітря) */
