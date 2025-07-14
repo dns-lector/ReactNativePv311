@@ -1,14 +1,24 @@
 import { Animated, Pressable, StyleSheet, Text, TouchableWithoutFeedback, useWindowDimensions, View } from "react-native";
 import { AppContext } from "../../shared/context/AppContext";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import Orientation from "react-native-orientation-locker";
+import RNFS from "react-native-fs";
 
 type EventData = {
     x: number,
     y: number,
     t: number
 };
+type FieldState = {
+    tiles: Array<number>,
+    score: number,
+    bestScore: number,
+};
+
 const distanceThreshold = 50;  // поріг спрацьовування свайпу (мін. відстань проведення)
 const timeThreshold = 500;     // поріг спрацьовування свайпу (макс. час проведення)
+const bestScoreFilename = '/best.score';
+const N = 4;
 
 let animValue = new Animated.Value(1);
 const opacityValues = Array.from({length: 16}, () => new Animated.Value(1));
@@ -58,6 +68,49 @@ export default function Game() {
         4096, 8192, 16384, 32768
     ]);
     const [score, setScore] = useState(0);
+    const [bestScore, setBestScore] = useState(10);
+    const [savedField, setSavedField] = useState(null as FieldState|null);
+
+    useEffect(() => {
+        loadBestScore();
+        Orientation.lockToPortrait();
+        return () => Orientation.unlockAllOrientations();
+    }, []);
+
+    useEffect(() => {
+        if(score > bestScore) {
+            setBestScore(score);
+        }
+    }, [score]);
+
+    useEffect(() => {        
+        saveBestScore();
+    }, [bestScore]);
+
+    const saveBestScore = () => {
+        const path = RNFS.DocumentDirectoryPath + bestScoreFilename;
+        return RNFS.writeFile(path, bestScore.toString(), 'utf8');
+    };
+    const loadBestScore = () => {
+        const path = RNFS.DocumentDirectoryPath + bestScoreFilename;
+        return RNFS.readFile(path, 'utf8')
+        .then(str => {
+            setBestScore(Number(str));
+        });
+    };
+    const saveField = () => {
+        setSavedField({
+            tiles: [...tiles],
+            score: score,
+            bestScore: bestScore,
+        });
+    };
+    const undoField = () => {
+        if(savedField == null) return;
+        setTiles(savedField!.tiles);
+        setScore(savedField!.score);
+        setBestScore(savedField!.bestScore);
+    };
 
     const tileFontSize = (tileValue: number) => {
         return tileValue < 10 ? width * 0.12
@@ -81,7 +134,9 @@ export default function Game() {
             if(Math.abs(dx) > Math.abs(dy)) {  // horizontal
                 if(Math.abs(dx) > distanceThreshold) {
                     if(dx > 0) {
-                        if( moveRight() ) {
+                        if( canMoveRight() ) {
+                            saveField();  // збереження стану
+                            moveRight();  // новий рух
                             setText("Right - OK");
                             spawnTile();
                             setTiles([...tiles]);
@@ -157,6 +212,7 @@ export default function Game() {
         spawnTile();
         spawnTile();
         setTiles([...tiles]);
+        setScore(0);
     };
 
     const moveLeft = () => {
@@ -178,6 +234,7 @@ export default function Game() {
                     tiles[r*N+c] *= 2;
                     tiles[r*N+c+1] = 0;
                     setScore(score + tiles[r*N+c]);
+                    
                     res = true;
                 }
             }
@@ -194,14 +251,24 @@ export default function Game() {
         return res;
     };
 
+    const canMoveRight = () => {
+        for(let r = 0; r < N; r += 1) {       // row index  
+            for(let c = 1; c < N; c += 1 ) {  // column index
+                if( tiles[r*N + c - 1] != 0 && (
+                        tiles[r*N + c - 1] == tiles[r*N + c] || tiles[r*N + c] == 0 )
+                ) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
     const moveRight = () => {
         // [2000] -> [0002]
         // [0204] -> [0024]
         // [2002] -> (0022) -> [0004]
         // [0222] -> (0204) -> [0024]
         // [2222] -> (0404) -> [0044]
-        const N = 4;
-        let res = false;
         var collapsedIndexes = [];
         for(let r = 0; r < N; r += 1) {       // row index                     // [2400]
             // 1. Move right
@@ -209,8 +276,7 @@ export default function Game() {
                 for(let c = 0; c < N - 1; c += 1 ) {  // column index          // 
                     if( tiles[r*N + c] != 0 && tiles[r*N + c + 1] == 0 ) {     // [2040] [2004]
                         tiles[r*N + c + 1] = tiles[r*N + c];                   // [0204] [0024]
-                        tiles[r*N + c] = 0;                                    // 
-                        res = true;
+                        tiles[r*N + c] = 0;
                     }
                 }
             }
@@ -222,7 +288,6 @@ export default function Game() {
                     tiles[r*N + c - 1] = 0;
                     setScore(score + tiles[r*N + c]);
                     collapsedIndexes.push(r*N + c);
-                    res = true;
                 }
             }
 
@@ -254,7 +319,6 @@ export default function Game() {
                 ])
             )).start();
         }
-        return res;
     };
 
     return <View style={styles.container}>
@@ -271,13 +335,13 @@ export default function Game() {
                     
                     <View style={styles.topBlockScore}>
                         <Text style={styles.topBlockScoreText}>BEST</Text>
-                        <Text style={styles.topBlockScoreText}>100500</Text>
+                        <Text style={styles.topBlockScoreText}>{bestScore}</Text>
                     </View>
                 </View>
 
                 <View style={styles.topBlockButtons}>
                     <Pressable style={styles.topBlockButton} onPress={newGame}><Text style={styles.topBlockButtonText}>NEW</Text></Pressable>
-                    <Pressable style={styles.topBlockButton}><Text style={styles.topBlockButtonText}>UNDO</Text></Pressable>
+                    <Pressable style={styles.topBlockButton} onPress={undoField}><Text style={styles.topBlockButtonText}>UNDO</Text></Pressable>
                 </View>
             </View>
         </View>
@@ -409,7 +473,4 @@ const styles = StyleSheet.create({
   }
 });
 /*
-Д.З. Гра 2048
-- реалізувати рух вгору 
-- реалізувати рух вниз 
-- анімувати score (текстове поле) при наборі балів */
+Д.З. Завершити проєкт "Гра 2048" */
