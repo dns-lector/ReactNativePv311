@@ -2,12 +2,13 @@
  * npx react-native run-android
  */
 
-import {  BackHandler, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import {  BackHandler, Image, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import Calc from '../pages/calc/Calc';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import Game from '../pages/game/Game';
 import { AppContext } from '../shared/context/AppContext';
+import Auth from '../pages/auth/Auth';
 
 function Main() {
   const insets = useSafeAreaInsets();
@@ -69,17 +70,24 @@ function App() {
       {/* передаємо navigate через контекст на всі дочірні елементи*/} 
       <AppContext.Provider value={{navigate}}>
         <View style={styles.content}>
-          { page == "calc" ? <Calc />
+          {   page == "calc" ? <Calc />
+            : page == "auth" ? <Auth />
             : <Game />
           }
         </View>
 
         <View style={styles.bottomNav}>
           <Pressable onPress={() => navigate("calc")} style={styles.bottomNavItem}>
-            <Text>Calc</Text>
+            <Image source={require("../shared/assets/images/calc.png")} 
+                   style={[styles.bottomNavImage,{width: 26, tintColor: "#eee"}]} />
           </Pressable>        
           <Pressable onPress={() => navigate("game")} style={styles.bottomNavItem}>
-            <Text>Game</Text>
+            <Image source={require("../shared/assets/images/game.jpg")} 
+                   style={[styles.bottomNavImage,{width: 34}]} />
+          </Pressable>   
+          <Pressable onPress={() => navigate("auth")} style={styles.bottomNavItem}>
+            <Image source={require("../shared/assets/images/auth.png")} 
+                   style={[styles.bottomNavImage,{width: 30}]} />
           </Pressable>
         </View>
       </AppContext.Provider>  
@@ -113,7 +121,12 @@ const styles = StyleSheet.create({
     borderColor: "gray",
     borderRadius: 5,
     borderWidth: 1,
+    marginTop: 5,
     padding: 5,
+  },
+  bottomNavImage: {
+    height: 34,   
+    
   }
 });
 
