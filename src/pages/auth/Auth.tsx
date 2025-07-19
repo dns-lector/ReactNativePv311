@@ -2,29 +2,26 @@ import { useContext, useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import FirmButton from "../../features/buttons/ui/FirmButton";
 import { ButtonTypes } from "../../features/buttons/model/ButtonTypes";
-import base64 from "react-native-base64";  // npm i react-native-base64; npm i @types/react-native-base64
+// import base64 from "react-native-base64";  // npm i react-native-base64; npm i @types/react-native-base64
 import { AppContext } from "../../shared/context/AppContext";
+import { Buffer } from 'buffer';
 
 export default function Auth() {
+    const {request, user, setUser} = useContext(AppContext);
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
-    const {request, user, setUser} = useContext(AppContext);
     const [userName, setUserName] = useState(null as string|null);
 
     useEffect(() => {
-      if( user != null ) {
-        console.log(JSON.parse(base64.decode(user.split('.')[1]).trim()))
-        // console.log(JSON.parse('{"iss":"AzurePv311","sub":"32d0f602-8ffe-46c6-a0d2-c59df5d9ed45","aud":"SelfRegistered","iat":17528599486,"exp":17528599786,"nid":"jc","nam":"John Connor"}'));
-      }
-      // setUserName(user == null ? null 
-      //   : JSON.parse( base64.decode(user.split('.')[1]) ).nam)
+      setUserName(user == null ? null 
+        : JSON.parse( Buffer.from(user.split('.')[1], 'base64').toString('utf8') ).nam)
     }, [user]);
 
     const onEnterPress = () => {
         console.log(login, password);
         request("/Cosmos/SignIn", {
           headers: {
-            'Authorization': 'Basic ' + base64.encode(`${login}:${password}`)
+            'Authorization': 'Basic ' + Buffer.from(`${login}:${password}`, 'utf-8').toString('base64')
           }
         }).then(setUser);
     };
