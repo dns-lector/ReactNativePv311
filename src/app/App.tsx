@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import Game from '../pages/game/Game';
 import { AppContext } from '../shared/context/AppContext';
 import Auth from '../pages/auth/Auth';
+import Rates from '../pages/rates/Rates';
 
 function Main() {
   const insets = useSafeAreaInsets();
@@ -103,8 +104,9 @@ function App() {
       {/* передаємо navigate через контекст на всі дочірні елементи*/} 
       <AppContext.Provider value={{navigate, user, setUser, request}}>
         <View style={styles.content}>
-          {   page == "calc" ? <Calc />
-            : page == "auth" ? <Auth />
+          {   page == "calc"  ? <Calc  />
+            : page == "auth"  ? <Auth  />
+            : page == "rates" ? <Rates />
             : <Game />
           }
         </View>
@@ -121,6 +123,10 @@ function App() {
           <Pressable onPress={() => navigate("auth")} style={styles.bottomNavItem}>
             <Image source={require("../shared/assets/images/auth.png")} 
                    style={[styles.bottomNavImage,{width: 30}]} />
+          </Pressable> 
+          <Pressable onPress={() => navigate("rates")} style={styles.bottomNavItem}>
+            <Image source={require("../shared/assets/images/coin25.png")} 
+                   style={[styles.bottomNavImage,{width: 34}]} />
           </Pressable>
         </View>
       </AppContext.Provider>  
