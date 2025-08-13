@@ -9,6 +9,8 @@ class RatesModel {
         return RatesModel.#instance;
     }
     rates: Array<NbuRate> = [];
+    shownRates: Array<NbuRate> = [];
+    searchText: string = "";
 }
 
 export default RatesModel;
