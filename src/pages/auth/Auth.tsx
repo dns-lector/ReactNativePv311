@@ -7,7 +7,7 @@ import { AppContext } from "../../shared/context/AppContext";
 import { Buffer } from 'buffer';
 
 export default function Auth() {
-    const {request, user, setUser} = useContext(AppContext);
+    const {request, user, setUser, showModal} = useContext(AppContext);
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
     const [userName, setUserName] = useState(null as string|null);
@@ -18,7 +18,21 @@ export default function Auth() {
     }, [user]);
 
     const onEnterPress = () => {
-        console.log(login, password);
+        if(login.length == 0) {
+          console.log("Modal login");
+          showModal({
+            title: "Авторизація",
+            message: "Введіть логін",
+          });
+          return;
+        }
+        if(password.length == 0) {
+          showModal({
+            title: "Авторизація",
+            message: "Введіть пароль",
+          });
+          return;
+        }
         request("/Cosmos/SignIn", {
           headers: {
             'Authorization': 'Basic ' + Buffer.from(`${login}:${password}`, 'utf-8').toString('base64')
@@ -55,7 +69,7 @@ export default function Auth() {
         </View>
         <FirmButton title="Вхід" 
             type={isFormValid() ? ButtonTypes.primary : ButtonTypes.secondary} 
-            action={isFormValid() ? onEnterPress : () => {}} />
+            action={ onEnterPress } />
     </View>;
 
     const userView = () => <View>

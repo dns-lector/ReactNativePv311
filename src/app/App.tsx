@@ -2,7 +2,7 @@
  * npx react-native run-android
  */
 
-import {  BackHandler, Image, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { BackHandler, Image, Pressable, StyleSheet, View } from 'react-native';
 import Calc from '../pages/calc/Calc';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
@@ -10,6 +10,9 @@ import Game from '../pages/game/Game';
 import { AppContext } from '../shared/context/AppContext';
 import Auth from '../pages/auth/Auth';
 import Rates from '../pages/rates/Rates';
+import Chat from '../pages/chat/Chat';
+import ModalData from '../shared/types/ModalData';
+import ModalView from './ui/ModalView';
 
 function Main() {
   const insets = useSafeAreaInsets();
@@ -32,6 +35,8 @@ function App() {
   const [page, setPage] = useState("game");
   const [user, setUser] = useState(null as string|null);
   const [history, setHistory] = useState([] as Array<string>);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [modalData, setModalData] = useState({message: ""} as ModalData);
 
 
   const request = (url:string, ini?:any) => {
@@ -66,11 +71,15 @@ function App() {
 }
 
   const navigate = (href:string) => {  // додавання до історії поточної сторінки
+    if(href == "-1") {
+      popRoute();
+      return;
+    }
     if(href == page) {                 // та перехід на нову сторінку
       return;
     }
     history.push(page);
-    console.log(history);
+    // console.log(history);
     setHistory(history);
     setPage(href);
   };
@@ -87,6 +96,11 @@ function App() {
     }
   };
 
+  const showModal = (data:ModalData) => {
+    setModalData(data);
+    setModalVisible(true);
+  };
+
   useEffect(() => {
     // перехоплюємо оброблення апаратної кнопки "назад"
     const listener = BackHandler.addEventListener('hardwareBackPress', () => { 
@@ -101,12 +115,20 @@ function App() {
 
   return (<SafeAreaProvider>
     <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
+      
       {/* передаємо navigate через контекст на всі дочірні елементи*/} 
-      <AppContext.Provider value={{navigate, user, setUser, request}}>
+      <AppContext.Provider value={{navigate, user, setUser, request, showModal}}>
+
+        <ModalView 
+          isModalVisible={isModalVisible} 
+          setModalVisible={setModalVisible}
+          modalData={modalData}/>
+          
         <View style={styles.content}>
           {   page == "calc"  ? <Calc  />
             : page == "auth"  ? <Auth  />
             : page == "rates" ? <Rates />
+            : page == "chat"  ? <Chat  />
             : <Game />
           }
         </View>
@@ -127,6 +149,10 @@ function App() {
           <Pressable onPress={() => navigate("rates")} style={styles.bottomNavItem}>
             <Image source={require("../shared/assets/images/coin25.png")} 
                    style={[styles.bottomNavImage,{width: 34}]} />
+          </Pressable>
+          <Pressable onPress={() => navigate("chat")} style={styles.bottomNavItem}>
+            <Image source={require("../shared/assets/images/auth.png")} 
+                   style={[styles.bottomNavImage,{width: 30}]} />
           </Pressable>
         </View>
       </AppContext.Provider>  
@@ -166,7 +192,7 @@ const styles = StyleSheet.create({
   bottomNavImage: {
     height: 34,   
     
-  }
+  },
 });
 
 export default App;
