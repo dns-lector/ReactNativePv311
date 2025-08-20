@@ -13,8 +13,7 @@ export default function Auth() {
     const [userName, setUserName] = useState(null as string|null);
 
     useEffect(() => {
-      setUserName(user == null ? null 
-        : JSON.parse( Buffer.from(user.split('.')[1], 'base64').toString('utf8') ).nam)
+      setUserName(user == null ? null : user.nam)
     }, [user]);
 
     const onEnterPress = () => {
@@ -37,7 +36,13 @@ export default function Auth() {
           headers: {
             'Authorization': 'Basic ' + Buffer.from(`${login}:${password}`, 'utf-8').toString('base64')
           }
-        }).then(setUser);
+        }).then(jwt => {
+          setUser(
+            JSON.parse( 
+              Buffer.from(jwt.split('.')[1], 'base64').toString('utf8') 
+            )
+          );
+        });
     };
 
     const onRequestPress = () => {

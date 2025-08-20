@@ -13,6 +13,7 @@ import Rates from '../pages/rates/Rates';
 import Chat from '../pages/chat/Chat';
 import ModalData from '../shared/types/ModalData';
 import ModalView from './ui/ModalView';
+import User from '../shared/types/User';
 
 function Main() {
   const insets = useSafeAreaInsets();
@@ -33,7 +34,7 @@ function App() {
   };
 
   const [page, setPage] = useState("game");
-  const [user, setUser] = useState(null as string|null);
+  const [user, setUser] = useState(null as User|null);
   const [history, setHistory] = useState([] as Array<string>);
   const [isModalVisible, setModalVisible] = useState(false);
   const [modalData, setModalData] = useState({message: ""} as ModalData);
@@ -151,8 +152,8 @@ function App() {
                    style={[styles.bottomNavImage,{width: 34}]} />
           </Pressable>
           <Pressable onPress={() => navigate("chat")} style={styles.bottomNavItem}>
-            <Image source={require("../shared/assets/images/auth.png")} 
-                   style={[styles.bottomNavImage,{width: 30}]} />
+            <Image source={require("../shared/assets/images/chat.png")} 
+                   style={[styles.bottomNavImage,{width: 34}]} />
           </Pressable>
         </View>
       </AppContext.Provider>  
