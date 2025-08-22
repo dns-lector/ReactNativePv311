@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import rateItem from "./components/rateItem";
 import RatesModel from "./models/RatesModel";
 import DateTimePicker, { DateType, useDefaultStyles } from 'react-native-ui-datepicker';
@@ -10,9 +10,10 @@ export default function Rates() {
     const [shownRates, setShownRates] = useState(RatesModel.instance.shownRates);
     const [searchText, setSearchText] = useState(RatesModel.instance.searchText);
     const [isCalendarVisible, setCalendarVisible] = useState(false);
-    
+    const [isLoading, setLoading] = useState(false);
     const defaultStyles = useDefaultStyles();
-    const [selected, setSelected] = useState<DateType>();
+    const [selected, setSelected] = useState<Date>(new Date());
+    const selectedRef = useRef(selected);
 
     useEffect(() => {
         if(RatesModel.instance.rates.length == 0) {
@@ -46,11 +47,38 @@ export default function Rates() {
         RatesModel.instance.searchText = searchText;
     }, [searchText, rates]);
 
+    useEffect(() => {
+        selectedRef.current = selected;
+        console.log(selectedRef.current?.toString());
+        setLoading(true);
+        setTimeout(() => setLoading(false), 1500);
+    }, [selected]);
+
     const changeDate = () => {
         setCalendarVisible(true);
     };
 
+    const getRequestDate = (d: Date) => {
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = d.getFullYear();
+        return `${day}.${month}.${year}`;
+    };
+
+    const onDateChanged = ({date}:{date:DateType}) => {
+        date = date as Date|null;
+        if(date == null) date = selected;
+        console.log(date.toDateString(), selectedRef.current.toDateString());
+        if(date.toDateString() != selectedRef.current.toDateString()) {
+            setSelected(date as (Date));
+        }
+        setCalendarVisible(false);
+    };
+
     return <View style={styles.container}>
+        {isLoading && <View style={styles.loader}>
+            <ActivityIndicator size="large" color="#b19c15ff" style={{margin:"auto", transform: [{scale: 2}]}} />
+        </View> }
         <View style={styles.searchBar}>
             <TouchableOpacity style={styles.searchButton}>
                 <Image source={require("../../shared/assets/images/Search_Icon.png")} 
@@ -64,17 +92,14 @@ export default function Rates() {
                     style={styles.searchButtonImg}/>
             </TouchableOpacity>
             <TouchableOpacity onPress={changeDate}>
-                <Text>{selected?.toString() ?? "13.08.2025"}</Text>
+                <Text style={{color:"#fff"}}>{getRequestDate(selected)}</Text>
             </TouchableOpacity>
         </View>
         <View style={{display: isCalendarVisible ? "contents":"none"}}>
             <DateTimePicker
                 mode="single"
                 date={selected}
-                onChange={({ date }) => {
-                    setSelected(date);
-                    setCalendarVisible(false);
-                } }
+                onChange={onDateChanged}
                 styles={defaultStyles}
             />
         </View>
@@ -96,6 +121,15 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "space-between",
     height: "100%",
+  },
+  loader: {
+    position: "absolute",
+    left: 10,
+    top: 10,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#555555e5",
+    zIndex: 2,
   },
   ratesList: {
     flex: 1,

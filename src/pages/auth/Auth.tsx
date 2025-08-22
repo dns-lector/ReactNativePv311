@@ -11,6 +11,7 @@ export default function Auth() {
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
     const [userName, setUserName] = useState(null as string|null);
+    const [isLoading, setLoading] = useState(false);
 
     useEffect(() => {
       setUserName(user == null ? null : user.nam)
@@ -32,6 +33,8 @@ export default function Auth() {
           });
           return;
         }
+
+        setLoading(true);
         request("/Cosmos/SignIn", {
           headers: {
             'Authorization': 'Basic ' + Buffer.from(`${login}:${password}`, 'utf-8').toString('base64')
@@ -42,7 +45,15 @@ export default function Auth() {
               Buffer.from(jwt.split('.')[1], 'base64').toString('utf8') 
             )
           );
-        });
+        })
+        .catch(err => {
+          console.error(err);
+          showModal({
+            title: "Авторизація",
+            message: "Помилка надсилання. Повторіть пізніше",
+          });
+        })
+        .finally(() => setLoading(false));
     };
 
     const onRequestPress = () => {
@@ -72,9 +83,9 @@ export default function Auth() {
                 value={password}
                 onChangeText={setPassword} />
         </View>
-        <FirmButton title="Вхід" 
-            type={isFormValid() ? ButtonTypes.primary : ButtonTypes.secondary} 
-            action={ onEnterPress } />
+        <FirmButton title={isLoading ? "..." : "Вхід"} 
+            type={isFormValid() && !isLoading ? ButtonTypes.primary : ButtonTypes.secondary} 
+            action={ isLoading ? ()=>{} : onEnterPress } />
     </View>;
 
     const userView = () => <View>

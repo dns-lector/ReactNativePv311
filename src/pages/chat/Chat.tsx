@@ -15,6 +15,7 @@ export default function Chat() {
     const [messageText, setMessageText] = useState("");
 
     useEffect(() => {
+      let handle: NodeJS.Timeout|null = null;
         if(user == null) {
             showModal({
                 title: "Комунікатор",
@@ -25,6 +26,13 @@ export default function Chat() {
                 negativeButtonAction: () => navigate("-1"),
                 closeButtonAction: () => navigate("-1"),
             });
+        }
+        else {
+          handle = setInterval(updateMessages, 1000);
+        }
+
+        return () => {
+          if(handle != null) clearInterval(handle);
         }
     }, [user]);
 
@@ -45,6 +53,7 @@ export default function Chat() {
     }, []);
 
     const updateMessages = () => {
+      // console.log("Update starts");
       fetch(chatUrl)
       .then(r => r.json())
       .then(j => {
@@ -79,7 +88,7 @@ export default function Chat() {
         });
         return;
       }
-      let data = `author=${user!.nam}&msg=${messageText}`;
+      let data = `author=${encodeURIComponent(user!.nam)}&msg=${encodeURIComponent(messageText)}`;
       console.log(data);
       fetch(chatUrl, {
         method: 'POST',
@@ -102,16 +111,17 @@ export default function Chat() {
       });
     };
 
-    return <KeyboardAvoidingView
+    return user == null ? <View></View> : <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container} >
       <View style={styles.chat}>
         <ScrollView
           ref={scrollViewRef} 
           onContentSizeChange={() => {scrollViewRef.current?.scrollToEnd()}}>
-            {messages.map((m, i) => i % 2 == 0 
-            ? <OtherMessage message={m} onPress={messagePressed} />
-            : <MyMessage message={m} onPress={messagePressed} />)}
+            {messages.map((m, i) =><View key={m.id}>{i % 2 == 0 
+              ? <OtherMessage message={m} onPress={messagePressed}  />
+              : <MyMessage message={m} onPress={messagePressed}/>}
+            </View> )}
         </ScrollView>
       </View>
       <View style={styles.inputRow} >

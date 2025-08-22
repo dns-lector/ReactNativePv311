@@ -1,13 +1,13 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatMessage from "../types/ChatMessage";
 import { displayDate } from "../../../shared/services/helper";
+import { Key } from "react";
 
 export default function MyMessage(
     {message, onPress}:
     {message:ChatMessage, onPress:(message:ChatMessage)=>void}) 
 {
     return <TouchableOpacity 
-                key={message.id} 
                 style={styles.container}
                 onPress={() => onPress(message)}>
         <Text>{displayDate(message.moment)}</Text>
